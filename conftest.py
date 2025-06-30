@@ -1,24 +1,27 @@
+import tempfile
+import os
 import pytest
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-
-@pytest.fixture(scope="function")
-def browser():
-    options = Options()
-    options.add_argument("--headless")  # Для запуска без GUI
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    
-    try:
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-        driver.implicitly_wait(10)
-        yield driver
-    except Exception as e:
-        pytest.fail(f"Browser initialization failed: {str(e)}")
-    finally:
-        driver.quit()
 
 @pytest.fixture
-def login_page(browser):
-    return LoginPage(browser, "https://example.com/login")
+def chrome_driver():
+    options = webdriver.ChromeOptions()
+    
+    # Создаём уникальную временную папку для user-data-dir
+    user_data_dir = os.path.join(tempfile.gettempdir(), f"chrome_profile_{os.getpid()}")
+    options.add_argument(f"--user-data-dir={user_data_dir}")
+    
+    # Другие настройки (если нужны)
+    options.add_argument("--headless")  # Пример: запуск без GUI
+    
+    driver = webdriver.Chrome(options=options)
+    yield driver
+    
+    # Важно: закрываем драйвер после теста
+    driver.quit()
+    
+    # Очистка (опционально)
+    try:
+        os.rmdir(user_data_dir)
+    except OSError:
+        pass
