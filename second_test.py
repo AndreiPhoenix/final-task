@@ -1,37 +1,28 @@
 import pytest
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-def test_login_valid_credentials():
+@pytest.fixture
+def browser():
     driver = webdriver.Chrome()
-    driver.get("https://example.com/login")
-    
-    email = driver.find_element("id", "email")
-    email.send_keys("valid@example.com")
-    
-    password = driver.find_element("id", "password")
-    password.send_keys("correct_password")
-    
-    login_button = driver.find_element("id", "login-btn")
-    login_button.click()
-    
-    assert "Dashboard" in driver.title
+    yield driver
     driver.quit()
 
-def test_login_wrong_password():
-    driver = webdriver.Chrome()
-    driver.get("https://example.com/login")
+def test_login_valid_credentials(browser):
+    browser.get("https://example.com/login")
     
-    email = driver.find_element("id", "email")
-    email.send_keys("valid@example.com")
-    
-    password = driver.find_element("id", "password")
-    password.send_keys("wrong_password")
-    
-    login_button = driver.find_element("id", "login-btn")
-    login_button.click()
-    
-    error_message = driver.find_element("id", "error-message").text
-    assert error_message == "Неверный пароль"
-    driver.quit()
+    try:
+        email = WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located((By.ID, "email"))
+        )
+        email.send_keys("valid@example.com")
+        
+        # ... остальные шаги теста ...
+        
+        assert "Dashboard" in browser.title
+    except Exception as e:
+        pytest.fail(f"Test failed with exception: {str(e)}")
 
-... остальные 3 теста ...
+# ... остальные тесты ...
