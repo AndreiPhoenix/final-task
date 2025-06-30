@@ -1,27 +1,41 @@
-import tempfile
-import os
 import pytest
 from selenium import webdriver
+import tempfile
+import os
+import subprocess
 
-@pytest.fixture
-def chrome_driver():
+def kill_chrome_processes():
+    """Убивает все процессы Chrome/chromedriver"""
+    try:
+        subprocess.run(["pkill", "-f", "chrome"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-f", "chromedriver"], stderr=subprocess.DEVNULL)
+    except:
+        pass
+
+@pytest.fixture(scope="function")
+def browser():
+    # Убиваем старые процессы перед запуском
+    kill_chrome_processes()
+
+    # Создаем уникальную папку для профиля
+    profile_dir = os.path.join(tempfile.gettempdir(), f"chrome_profile_{os.getpid()}")
+    
+    # Настройки Chrome
     options = webdriver.ChromeOptions()
-    
-    # Создаём уникальную временную папку для user-data-dir
-    user_data_dir = os.path.join(tempfile.gettempdir(), f"chrome_profile_{os.getpid()}")
-    options.add_argument(f"--user-data-dir={user_data_dir}")
-    
-    # Другие настройки (если нужны)
-    options.add_argument("--headless")  # Пример: запуск без GUI
-    
+    options.add_argument(f"--user-data-dir={profile_dir}")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    # Инициализация драйвера
     driver = webdriver.Chrome(options=options)
+    
     yield driver
     
-    # Важно: закрываем драйвер после теста
+    # Завершение работы
     driver.quit()
     
-    # Очистка (опционально)
+    # Очистка профиля
     try:
-        os.rmdir(user_data_dir)
-    except OSError:
+        os.rmdir(profile_dir)
+    except:
         pass
