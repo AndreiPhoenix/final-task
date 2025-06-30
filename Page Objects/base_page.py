@@ -23,3 +23,13 @@ class BasePage:
         except Exception as e:
             self.log.error(f"Element not found: {locator}")
             raise
+
+def save_cookies(self, path="cookies.pkl"):
+    with open(path, 'wb') as file:
+        pickle.dump(self.browser.get_cookies(), file)
+
+def load_cookies(self, path="cookies.pkl"):
+    with open(path, 'rb') as file:
+        cookies = pickle.load(file)
+        for cookie in cookies:
+            self.browser.add_cookie(cookie)
