@@ -39,3 +39,7 @@ def browser():
         os.rmdir(profile_dir)
     except:
         pass
+
+if os.getenv("CI"):  # Для GitHub Actions и подобных
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
